@@ -1,0 +1,10 @@
+{
+  "name": "playable-ads-config-studio",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build"
+  }
+}
