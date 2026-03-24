@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { ZodError } from "zod";
+import { ZodError, type ZodIssue } from "zod";
 import {
   GeneratePlayableAdInputSchema,
   PlayableAdConfigSchema,
@@ -46,6 +46,22 @@ function formatZodError(error: ZodError) {
   }));
 }
 
+function toSafeLogValue(value: unknown, maxLength = 800): string {
+  let serialized: string;
+
+  try {
+    serialized = typeof value === "string" ? value : JSON.stringify(value);
+  } catch {
+    serialized = String(value);
+  }
+
+  if (serialized.length <= maxLength) {
+    return serialized;
+  }
+
+  return `${serialized.slice(0, maxLength)}…[truncated ${serialized.length - maxLength} chars]`;
+}
+
 export async function generatePlayableAdConfig(rawInput: unknown): Promise<PlayableAdConfig> {
   let input: GeneratePlayableAdInput;
 
@@ -78,6 +94,18 @@ export async function generatePlayableAdConfig(rawInput: unknown): Promise<Playa
     status: true,
     createdAt: true
   }).safeParse(rawModelOutput);
+
+  if (!parsed.success) {
+    console.warn("[llm] schema validation failure before fallback", {
+      provider: llmProvider.name,
+      model: llmProvider.model ?? "n/a",
+      issues: parsed.error.issues.map((issue: ZodIssue) => ({
+        path: issue.path.join("."),
+        message: issue.message
+      })),
+      rawOutput: toSafeLogValue(rawModelOutput)
+    });
+  }
 
   const finalConfig: PlayableAdConfig = parsed.success
     ? {
