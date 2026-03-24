@@ -7,5 +7,35 @@ services:
     volumes:
       - mongo_data:/data/db
 
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: playable_ads_api
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 8080
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_DB_NAME: playable_ads_studio
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
+      OPENROUTER_TIMEOUT_MS: ${OPENROUTER_TIMEOUT_MS:-20000}
+    depends_on:
+      - mongo
+    ports:
+      - "8080:8080"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: playable_ads_web
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
 volumes:
   mongo_data:
