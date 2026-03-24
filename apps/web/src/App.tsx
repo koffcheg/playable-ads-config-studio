@@ -33,6 +33,14 @@ type AgentGenerateResponse = {
   createdAt: string;
 };
 
+type AgentGenerateResponse = {
+  concept: AgentConcept;
+  steps: AgentRunStep[];
+  output: PlayableAdConfig;
+  provider: string;
+  createdAt: string;
+};
+
 type HistoryListItem = PlayableAdHistoryListItem;
 
 type ApiError = {
@@ -338,8 +346,6 @@ export default function App() {
               : "Generating a config and refreshing history…"}
           </p>
         )}
-
-        {loading && <p className="loadingText">Generating a config and refreshing history…</p>}
 
         {apiError && (
           <div className="errorBox">
