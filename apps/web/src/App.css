@@ -16,7 +16,7 @@ body {
 
 .page {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   padding: 24px;
   min-height: 100vh;
@@ -27,6 +27,11 @@ body {
   border: 1px solid #1f2937;
   border-radius: 16px;
   padding: 20px;
+  min-width: 0;
+}
+
+.panel > * {
+  min-width: 0;
 }
 
 .muted {
@@ -75,6 +80,7 @@ button:disabled {
   border-radius: 14px;
   margin-bottom: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  min-width: 0;
 }
 
 .previewHeader {
@@ -118,6 +124,7 @@ button:disabled {
   border-radius: 10px;
   background: rgba(2, 6, 23, 0.6);
   border: 1px solid rgba(148, 163, 184, 0.25);
+  overflow-x: auto;
 }
 
 .loadingText {
@@ -141,11 +148,13 @@ button:disabled {
 }
 
 pre {
-  white-space: pre-wrap;
-  word-break: break-word;
+  white-space: pre;
+  word-break: normal;
   background: #020617;
   padding: 12px;
   border-radius: 12px;
+  max-width: 100%;
+  min-width: 0;
   overflow: auto;
 }
 
@@ -181,12 +190,12 @@ pre {
 
 @media (min-width: 860px) {
   .page {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1280px) {
   .page {
-    grid-template-columns: 1fr 1fr 0.9fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr);
   }
 }
