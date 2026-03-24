@@ -96,7 +96,7 @@ export async function generatePlayableAdConfig(rawInput: unknown): Promise<Playa
   }).safeParse(rawModelOutput);
 
   if (!parsed.success) {
-    console.warn("[llm] schema validation failure before fallback", {
+    console.warn("[llm] schema validation failure: using fallback config", {
       provider: llmProvider.name,
       model: llmProvider.model ?? "n/a",
       issues: parsed.error.issues.map((issue: ZodIssue) => ({

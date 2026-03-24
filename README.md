@@ -82,6 +82,20 @@ pnpm dev
 - Web: `http://localhost:3000`
 - API: `http://localhost:8080`
 
+## Dockerized setup
+
+Run the full stack (mongo + api + web):
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- Web: `http://localhost:3000`
+- API: `http://localhost:8080`
+- Mongo: `mongodb://localhost:27017`
+
 ## Environment variables
 
 Defined in `.env.example` (root). Key values:
@@ -133,5 +147,4 @@ Fallback is a **safe, deterministic config** returned when provider output is in
 - add API-level tests for success/fallback/timeout branches
 - add request IDs + structured logging correlation
 - expose lightweight generation metrics (success vs fallback rate)
-- add Dockerized one-command local bootstrap for full stack
 - optional auth + multi-user history scoping for production hardening

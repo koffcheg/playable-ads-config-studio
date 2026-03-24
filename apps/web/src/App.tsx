@@ -196,7 +196,7 @@ export default function App() {
           </label>
 
           <button type="submit" disabled={loading}>
-            {loading ? "Generating..." : "Generate config"}
+            {loading ? "Generating config..." : "Generate config"}
           </button>
         </form>
 
@@ -268,7 +268,7 @@ export default function App() {
 
         <div className="history">
           {history.length === 0 ? (
-            <p className="muted">No generations yet.</p>
+            <p className="muted">No generated ads yet.</p>
           ) : (
             history.map((item) => (
               <button
