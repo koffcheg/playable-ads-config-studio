@@ -39,3 +39,10 @@ export class DatabaseError extends AppError {
     this.name = "DatabaseError";
   }
 }
+
+export class ConfigurationError extends AppError {
+  constructor(message = "Invalid configuration", details?: unknown) {
+    super(message, 500, "CONFIGURATION_ERROR", details);
+    this.name = "ConfigurationError";
+  }
+}
