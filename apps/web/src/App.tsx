@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GeneratePlayableAdInputSchema,
+  type GameType,
   type GeneratePlayableAdInput,
   type PlayableAdConfig,
   type PlayableAdHistoryListItem
@@ -23,6 +24,24 @@ type ApiError = {
 };
 
 const apiBaseUrl = "http://localhost:8080";
+
+const gameTypePreviewCopy: Record<GameType, { title: string; flavor: string; lane: string }> = {
+  runner: {
+    title: "Runner lane preview",
+    flavor: "Swipe to dodge obstacles and keep momentum up.",
+    lane: "🏃  ▭  ⚡  ▭  🧱"
+  },
+  merge: {
+    title: "Merge board preview",
+    flavor: "Drag and combine matching pieces to evolve faster.",
+    lane: "🔹 + 🔹 → 🔷   |   🔷 + 🔷 → 💎"
+  },
+  "tap-survival": {
+    title: "Survival arena preview",
+    flavor: "Tap quickly to survive incoming waves and recover health.",
+    lane: "❤️❤️♡   ☄️☄️☄️   👆 TAP"
+  }
+};
 
 export default function App() {
   const [result, setResult] = useState<PlayableAdConfig | null>(null);
@@ -157,6 +176,8 @@ export default function App() {
           </button>
         </form>
 
+        {loading && <p className="loadingText">Generating a config and refreshing history…</p>}
+
         {apiError && (
           <div className="errorBox">
             <strong>{apiError.code}</strong>
@@ -191,7 +212,14 @@ export default function App() {
               <p>{result.objective}</p>
 
               <div className="miniPlayable">
-                <div className="scoreBox">Difficulty: {result.difficultyScore}</div>
+                <div className="miniPlayableHeader">
+                  <div>
+                    <strong>{gameTypePreviewCopy[result.gameType].title}</strong>
+                    <p className="muted">{gameTypePreviewCopy[result.gameType].flavor}</p>
+                  </div>
+                  <div className="scoreBox">Difficulty: {result.difficultyScore}</div>
+                </div>
+                <div className="previewLane">{gameTypePreviewCopy[result.gameType].lane}</div>
                 <button className="playableButton" type="button">
                   {result.ctaText}
                 </button>
@@ -221,7 +249,7 @@ export default function App() {
             history.map((item) => (
               <button
                 key={item.id}
-                className="historyItem"
+                className={`historyItem ${result?.id === item.id ? "historyItemActive" : ""}`}
                 onClick={() => {
                   loadHistoryItem(item.id).catch((error) => {
                     console.error(error);

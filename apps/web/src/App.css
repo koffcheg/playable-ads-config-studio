@@ -16,7 +16,7 @@ body {
 
 .page {
   display: grid;
-  grid-template-columns: 1fr 1fr 0.9fr;
+  grid-template-columns: 1fr;
   gap: 16px;
   padding: 24px;
   min-height: 100vh;
@@ -58,10 +58,16 @@ button {
 
 button {
   cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 button:hover {
   border-color: #60a5fa;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
 }
 
 .previewCard {
@@ -93,7 +99,30 @@ button:hover {
   gap: 12px;
 }
 
+.miniPlayableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 .scoreBox {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.previewLane {
+  font-family: "SF Mono", SFMono-Regular, ui-monospace, monospace;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.loadingText {
+  margin-top: 12px;
+  color: #93c5fd;
   font-size: 14px;
 }
 
@@ -108,6 +137,7 @@ button:hover {
   border: 1px solid #7f1d1d;
   background: #450a0a;
   color: #fecaca;
+  box-shadow: inset 0 0 0 1px rgba(127, 29, 29, 0.35);
 }
 
 pre {
@@ -128,4 +158,22 @@ pre {
   text-align: left;
   display: grid;
   gap: 4px;
+}
+
+.historyItemActive {
+  border-color: #93c5fd;
+  background: #1e3a8a;
+  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.35);
+}
+
+@media (min-width: 860px) {
+  .page {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1280px) {
+  .page {
+    grid-template-columns: 1fr 1fr 0.9fr;
+  }
 }
