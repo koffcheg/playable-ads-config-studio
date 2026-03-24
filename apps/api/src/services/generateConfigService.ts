@@ -7,14 +7,13 @@ import {
   type PlayableAdConfig
 } from "@studio/shared";
 import { getPlayableAdsCollection } from "../db/mongo.js";
-import { MockLlmProvider } from "./llm/mockProvider.js";
+import { getProvider } from "./llm/getProvider.js";
 import {
   DatabaseError,
   ExternalServiceError,
   ValidationError
 } from "../utils/errors.js";
 
-const llmProvider = new MockLlmProvider();
 
 function buildFallbackConfig(input: GeneratePlayableAdInput): PlayableAdConfig {
   const difficultyScore =
@@ -60,11 +59,17 @@ export async function generatePlayableAdConfig(rawInput: unknown): Promise<Playa
     throw new ValidationError("Invalid playable ad generation input");
   }
 
+  const llmProvider = getProvider();
+
   let rawModelOutput: unknown;
 
   try {
     rawModelOutput = await llmProvider.generatePlayableAdConfig(input);
   } catch (error) {
+    if (error instanceof ExternalServiceError) {
+      throw error;
+    }
+
     throw new ExternalServiceError("LLM provider failed to generate config", error);
   }
 
