@@ -35,7 +35,17 @@ export const PlayableAdConfigSchema = z.object({
   createdAt: z.string()
 });
 
+export const PlayableAdHistoryListItemSchema = z.object({
+  id: z.string(),
+  theme: z.string(),
+  gameType: GameTypeSchema,
+  provider: z.string(),
+  status: GenerationStatusSchema,
+  createdAt: z.string()
+});
+
 export type GeneratePlayableAdInput = z.infer<typeof GeneratePlayableAdInputSchema>;
 export type PlayableAdConfig = z.infer<typeof PlayableAdConfigSchema>;
+export type PlayableAdHistoryListItem = z.infer<typeof PlayableAdHistoryListItemSchema>;
 export type GameType = z.infer<typeof GameTypeSchema>;
 export type Difficulty = z.infer<typeof DifficultySchema>;

@@ -1,14 +1,24 @@
 import { getPlayableAdsCollection } from "../db/mongo.js";
 import { DatabaseError, NotFoundError } from "../utils/errors.js";
+import type { PlayableAdHistoryListItem } from "@studio/shared";
 
-export async function getHistory() {
+export async function getHistory(): Promise<PlayableAdHistoryListItem[]> {
   try {
     const collection = await getPlayableAdsCollection();
-    return collection
+    const records = await collection
       .find({}, { projection: { input: 1, output: 1, provider: 1, createdAt: 1 } })
       .sort({ createdAt: -1 })
       .limit(20)
       .toArray();
+
+    return records.map((record) => ({
+      id: record.output.id,
+      theme: record.output.theme,
+      gameType: record.output.gameType,
+      provider: record.provider,
+      status: record.output.status,
+      createdAt: record.createdAt
+    }));
   } catch (error) {
     throw new DatabaseError("Failed to load playable ad history", error);
   }
