@@ -11,7 +11,10 @@ import {
 import "./App.css";
 
 type HistoryDetailResponse = {
+  input: GeneratePlayableAdInput;
   output: PlayableAdConfig;
+  provider: string;
+  createdAt: string;
 };
 
 type HistoryListItem = PlayableAdHistoryListItem;
@@ -60,6 +63,25 @@ export default function App() {
     }
   });
 
+  function getDifficultyFromScore(score: number): GeneratePlayableAdInput["difficulty"] {
+    if (score <= 2) return "easy";
+    if (score === 3) return "medium";
+    return "hard";
+  }
+
+  function syncFormFromGeneratedConfig(
+    config: PlayableAdConfig,
+    previousInput: GeneratePlayableAdInput
+  ) {
+    form.reset({
+      gameType: config.gameType,
+      theme: config.theme,
+      difficulty: getDifficultyFromScore(config.difficultyScore),
+      targetAudience: previousInput.targetAudience,
+      ctaStyle: previousInput.ctaStyle
+    });
+  }
+
   async function loadHistory() {
     const response = await fetch(`${apiBaseUrl}/api/v1/playable-ads`);
 
@@ -80,6 +102,7 @@ export default function App() {
 
     const data: HistoryDetailResponse = await response.json();
     setResult(data.output);
+    form.reset(data.input);
   }
 
   useEffect(() => {
@@ -109,6 +132,7 @@ export default function App() {
       }
 
       setResult(data);
+      syncFormFromGeneratedConfig(data, values);
       await loadHistory();
     } catch (error) {
       console.error(error);
@@ -259,8 +283,12 @@ export default function App() {
                 type="button"
               >
                 <strong>{item.theme}</strong>
-                <span>{item.gameType}</span>
-                <span>{item.provider}</span>
+                <div className="historyMeta">
+                  <span>{item.gameType}</span>
+                  <span>{item.provider}</span>
+                  <span>{new Date(item.createdAt).toLocaleString()}</span>
+                </div>
+                <span className="historyStatus">Status: {item.status}</span>
               </button>
             ))
           )}
