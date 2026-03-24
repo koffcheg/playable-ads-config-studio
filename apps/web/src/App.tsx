@@ -4,16 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GeneratePlayableAdInputSchema,
   type GeneratePlayableAdInput,
-  type PlayableAdConfig
+  type PlayableAdConfig,
+  type PlayableAdHistoryListItem
 } from "@studio/shared";
 import "./App.css";
 
-type HistoryItem = {
-  _id: string;
+type HistoryDetailResponse = {
   output: PlayableAdConfig;
-  provider: string;
-  createdAt: string;
 };
+
+type HistoryListItem = PlayableAdHistoryListItem;
 
 type ApiError = {
   status: "error";
@@ -26,7 +26,7 @@ const apiBaseUrl = "http://localhost:8080";
 
 export default function App() {
   const [result, setResult] = useState<PlayableAdConfig | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<HistoryListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<ApiError | null>(null);
 
@@ -48,8 +48,19 @@ export default function App() {
       throw new Error("Failed to load history");
     }
 
-    const data = await response.json();
+    const data: HistoryListItem[] = await response.json();
     setHistory(data);
+  }
+
+  async function loadHistoryItem(id: string) {
+    const response = await fetch(`${apiBaseUrl}/api/v1/playable-ads/${id}`);
+
+    if (!response.ok) {
+      throw new Error("Failed to load history item");
+    }
+
+    const data: HistoryDetailResponse = await response.json();
+    setResult(data.output);
   }
 
   useEffect(() => {
@@ -209,16 +220,18 @@ export default function App() {
           ) : (
             history.map((item) => (
               <button
-                key={item.output.id}
+                key={item.id}
                 className="historyItem"
                 onClick={() => {
-                  setResult(item.output);
+                  loadHistoryItem(item.id).catch((error) => {
+                    console.error(error);
+                  });
                   setApiError(null);
                 }}
                 type="button"
               >
-                <strong>{item.output.theme}</strong>
-                <span>{item.output.gameType}</span>
+                <strong>{item.theme}</strong>
+                <span>{item.gameType}</span>
                 <span>{item.provider}</span>
               </button>
             ))
