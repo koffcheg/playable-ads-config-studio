@@ -15,5 +15,6 @@ export const env = {
   MONGO_DB_NAME: process.env.MONGO_DB_NAME ?? "playable_ads_studio",
   LLM_PROVIDER: process.env.LLM_PROVIDER ?? "mock",
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY ?? "",
-  OPENROUTER_MODEL: process.env.OPENROUTER_MODEL ?? ""
+  OPENROUTER_MODEL: process.env.OPENROUTER_MODEL ?? "",
+  OPENROUTER_TIMEOUT_MS: getNumber(process.env.OPENROUTER_TIMEOUT_MS, 20000)
 };

@@ -33,7 +33,8 @@ function createOpenRouterProvider(): OpenRouterProvider {
 
   return new OpenRouterProvider({
     apiKey: env.OPENROUTER_API_KEY,
-    model: env.OPENROUTER_MODEL
+    model: env.OPENROUTER_MODEL,
+    timeoutMs: env.OPENROUTER_TIMEOUT_MS
   });
 }
 
@@ -41,10 +42,14 @@ export function getProvider(): LlmProvider {
   const providerName = resolveProviderName(env.LLM_PROVIDER);
 
   switch (providerName) {
-    case "openrouter":
-      return createOpenRouterProvider();
+    case "openrouter": {
+      const provider = createOpenRouterProvider();
+      console.info(`[llm] selected provider=${provider.name} model=${provider.model}`);
+      return provider;
+    }
     case "mock":
     default:
+      console.info("[llm] selected provider=mock");
       return new MockLlmProvider();
   }
 }
