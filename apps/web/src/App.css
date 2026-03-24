@@ -44,6 +44,17 @@ body {
   margin-top: 16px;
 }
 
+.modeToggle {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.toggleButtonActive {
+  border-color: #93c5fd;
+  background: #1e3a8a;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -131,6 +142,15 @@ button:disabled {
   margin-top: 12px;
   color: #93c5fd;
   font-size: 14px;
+}
+
+.conceptCard,
+.stepsCard {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #0b1220;
+  border: 1px solid #1f2937;
 }
 
 .playableButton {

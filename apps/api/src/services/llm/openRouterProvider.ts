@@ -1,4 +1,9 @@
-import type { GeneratePlayableAdInput } from "@studio/shared";
+import {
+  AgentConceptSchema,
+  type AgentBriefInput,
+  type AgentConcept,
+  type GeneratePlayableAdInput
+} from "@studio/shared";
 import type { LlmProvider } from "./provider.js";
 import { ExternalServiceError } from "../../utils/errors.js";
 
@@ -30,6 +35,21 @@ function buildPrompt(input: GeneratePlayableAdInput): string {
     "- Keep strings concise, ad-ready, and aligned to the provided input.",
     "- Do not add any extra fields.",
     `Input: ${JSON.stringify(input)}`
+  ].join("\n");
+}
+
+function buildConceptPrompt(input: AgentBriefInput): string {
+  return [
+    "You are generating an ad concept for backend schema validation.",
+    "Return exactly one JSON object and nothing else.",
+    "Do not include markdown, code fences, explanations, comments, prefixes, or suffixes.",
+    "Use EXACT field names only: recommendedGameType, headlineIdea, ctaDirection, gameplayConcept, recommendedDifficulty.",
+    "Constraints:",
+    "- recommendedGameType must be one of: runner, merge, tap-survival.",
+    "- recommendedDifficulty must be one of: easy, medium, hard.",
+    "- Keep each string concise and actionable for ad generation.",
+    "- Do not add any extra fields.",
+    `Brief: ${JSON.stringify(input)}`
   ].join("\n");
 }
 
@@ -108,7 +128,27 @@ export class OpenRouterProvider implements LlmProvider {
     this.model = options.model;
   }
 
+  async generateAgentConcept(input: AgentBriefInput): Promise<AgentConcept> {
+    const raw = await this.requestModel(buildConceptPrompt(input));
+    const parsedConcept = AgentConceptSchema.safeParse(raw);
+
+    if (!parsedConcept.success) {
+      throw new ExternalServiceError("OpenRouter returned invalid concept JSON", {
+        issues: parsedConcept.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message
+        }))
+      });
+    }
+
+    return parsedConcept.data;
+  }
+
   async generatePlayableAdConfig(input: GeneratePlayableAdInput): Promise<unknown> {
+    return this.requestModel(buildPrompt(input));
+  }
+
+  private async requestModel(prompt: string): Promise<unknown> {
     const timeoutController = new AbortController();
     const timeoutId = setTimeout(() => timeoutController.abort(), this.options.timeoutMs);
 
@@ -131,7 +171,7 @@ export class OpenRouterProvider implements LlmProvider {
             },
             {
               role: "user",
-              content: buildPrompt(input)
+              content: prompt
             }
           ],
           temperature: 0.1

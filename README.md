@@ -114,6 +114,9 @@ Base URL: `http://localhost:8080`
 - `POST /api/v1/playable-ads/generate-config`
   - body: generation input schema from `packages/shared`
   - returns: playable ad config (`status: success|fallback`)
+- `POST /api/v1/playable-ads/agent-generate`
+  - body: high-level brief (theme, audience, campaign goal, tone)
+  - returns: concept + step trace + final playable ad output
 - `GET /api/v1/playable-ads`
   - returns recent generation history list
 - `GET /api/v1/playable-ads/:id`

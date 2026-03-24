@@ -119,6 +119,7 @@ export async function generatePlayableAdConfig(rawInput: unknown): Promise<Playa
   try {
     const collection = await getPlayableAdsCollection();
     await collection.insertOne({
+      mode: "manual",
       input,
       output: finalConfig,
       provider: llmProvider.name,

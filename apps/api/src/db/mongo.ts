@@ -1,10 +1,20 @@
 import { MongoClient, Db, Collection } from "mongodb";
-import type { GeneratePlayableAdInput, PlayableAdConfig } from "@studio/shared";
+import type {
+  AgentBriefInput,
+  AgentConcept,
+  AgentRunStep,
+  GeneratePlayableAdInput,
+  PlayableAdConfig
+} from "@studio/shared";
 import { env } from "../utils/env.js";
 import { DatabaseError } from "../utils/errors.js";
 
 export type PlayableAdDocument = {
+  mode?: "manual" | "agent";
   input: GeneratePlayableAdInput;
+  brief?: AgentBriefInput;
+  concept?: AgentConcept;
+  steps?: AgentRunStep[];
   output: PlayableAdConfig;
   provider: string;
   createdAt: string;

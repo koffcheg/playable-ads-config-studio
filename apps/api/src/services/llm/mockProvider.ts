@@ -1,4 +1,4 @@
-import type { GeneratePlayableAdInput } from "@studio/shared";
+import type { AgentBriefInput, AgentConcept, GeneratePlayableAdInput } from "@studio/shared";
 import type { LlmProvider } from "./provider.js";
 
 function mapDifficultyToScore(difficulty: GeneratePlayableAdInput["difficulty"]): number {
@@ -9,6 +9,8 @@ function mapDifficultyToScore(difficulty: GeneratePlayableAdInput["difficulty"])
       return 3;
     case "hard":
       return 4;
+    default:
+      return 3;
   }
 }
 
@@ -74,6 +76,27 @@ function tutorialByGameType(gameType: GeneratePlayableAdInput["gameType"]) {
 
 export class MockLlmProvider implements LlmProvider {
   name = "mock-llm";
+
+  async generateAgentConcept(input: AgentBriefInput): Promise<AgentConcept> {
+    const recommendedGameType: AgentConcept["recommendedGameType"] = input.campaignGoal
+      .toLowerCase()
+      .includes("retention")
+      ? "tap-survival"
+      : input.theme.toLowerCase().includes("merge")
+        ? "merge"
+        : "runner";
+
+    const recommendedDifficulty: AgentConcept["recommendedDifficulty"] =
+      input.targetAudience === "midcore" ? "medium" : "easy";
+
+    return {
+      recommendedGameType,
+      headlineIdea: `${input.theme} ${input.tone} challenge`,
+      ctaDirection: `Push ${input.campaignGoal} with a ${input.tone} CTA`,
+      gameplayConcept: `Build a ${recommendedGameType} moment around ${input.theme} for ${input.targetAudience} players`,
+      recommendedDifficulty
+    };
+  }
 
   async generatePlayableAdConfig(input: GeneratePlayableAdInput): Promise<unknown> {
     const palette = paletteByTheme(input.theme);

@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  AgentBriefInputSchema,
+  type AgentBriefInput,
+  type AgentConcept,
+  type AgentRunStep,
   GeneratePlayableAdInputSchema,
   type GameType,
   type GeneratePlayableAdInput,
@@ -11,7 +15,19 @@ import {
 import "./App.css";
 
 type HistoryDetailResponse = {
-  input: GeneratePlayableAdInput;
+  mode?: "manual" | "agent";
+  input?: GeneratePlayableAdInput;
+  brief?: AgentBriefInput;
+  concept?: AgentConcept;
+  steps?: AgentRunStep[];
+  output: PlayableAdConfig;
+  provider: string;
+  createdAt: string;
+};
+
+type AgentGenerateResponse = {
+  concept: AgentConcept;
+  steps: AgentRunStep[];
   output: PlayableAdConfig;
   provider: string;
   createdAt: string;
@@ -51,8 +67,11 @@ export default function App() {
   const [history, setHistory] = useState<HistoryListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<ApiError | null>(null);
+  const [mode, setMode] = useState<"manual" | "agent">("manual");
+  const [agentConcept, setAgentConcept] = useState<AgentConcept | null>(null);
+  const [agentSteps, setAgentSteps] = useState<AgentRunStep[]>([]);
 
-  const form = useForm<GeneratePlayableAdInput>({
+  const manualForm = useForm<GeneratePlayableAdInput>({
     resolver: zodResolver(GeneratePlayableAdInputSchema),
     defaultValues: {
       gameType: "runner",
@@ -60,6 +79,16 @@ export default function App() {
       targetAudience: "casual",
       ctaStyle: "urgent",
       difficulty: "easy"
+    }
+  });
+
+  const agentForm = useForm<AgentBriefInput>({
+    resolver: zodResolver(AgentBriefInputSchema),
+    defaultValues: {
+      theme: "space racers",
+      targetAudience: "casual",
+      campaignGoal: "increase day-1 retention",
+      tone: "urgent"
     }
   });
 
@@ -73,7 +102,7 @@ export default function App() {
     config: PlayableAdConfig,
     previousInput: GeneratePlayableAdInput
   ) {
-    form.reset({
+    manualForm.reset({
       gameType: config.gameType,
       theme: config.theme,
       difficulty: getDifficultyFromScore(config.difficultyScore),
@@ -102,7 +131,23 @@ export default function App() {
 
     const data: HistoryDetailResponse = await response.json();
     setResult(data.output);
-    form.reset(data.input);
+
+    if (data.mode === "agent") {
+      setMode("agent");
+      if (data.brief) {
+        agentForm.reset(data.brief);
+      }
+      setAgentConcept(data.concept ?? null);
+      setAgentSteps(data.steps ?? []);
+      return;
+    }
+
+    setMode("manual");
+    if (data.input) {
+      manualForm.reset(data.input);
+    }
+    setAgentConcept(null);
+    setAgentSteps([]);
   }
 
   useEffect(() => {
@@ -111,7 +156,7 @@ export default function App() {
     });
   }, []);
 
-  async function onSubmit(values: GeneratePlayableAdInput) {
+  async function onManualSubmit(values: GeneratePlayableAdInput) {
     setLoading(true);
     setApiError(null);
 
@@ -133,6 +178,44 @@ export default function App() {
 
       setResult(data);
       syncFormFromGeneratedConfig(data, values);
+      setAgentConcept(null);
+      setAgentSteps([]);
+      await loadHistory();
+    } catch (error) {
+      console.error(error);
+      setApiError({
+        status: "error",
+        code: "NETWORK_ERROR",
+        message: "Could not reach the backend service"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onAgentSubmit(values: AgentBriefInput) {
+    setLoading(true);
+    setApiError(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/playable-ads/agent-generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(values)
+      });
+
+      const data: AgentGenerateResponse = await response.json();
+
+      if (!response.ok) {
+        setApiError(data as unknown as ApiError);
+        return;
+      }
+
+      setResult(data.output);
+      setAgentConcept(data.concept);
+      setAgentSteps(data.steps);
       await loadHistory();
     } catch (error) {
       console.error(error);
@@ -154,51 +237,107 @@ export default function App() {
           Internal tool prototype for generating and previewing playable-ad configs.
         </p>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="form">
-          <label>
-            Game type
-            <select {...form.register("gameType")}>
-              <option value="runner">runner</option>
-              <option value="merge">merge</option>
-              <option value="tap-survival">tap-survival</option>
-            </select>
-          </label>
-
-          <label>
-            Theme
-            <input {...form.register("theme")} placeholder="space racers" />
-          </label>
-
-          <label>
-            Target audience
-            <select {...form.register("targetAudience")}>
-              <option value="casual">casual</option>
-              <option value="midcore">midcore</option>
-            </select>
-          </label>
-
-          <label>
-            CTA style
-            <select {...form.register("ctaStyle")}>
-              <option value="urgent">urgent</option>
-              <option value="reward">reward</option>
-              <option value="challenge">challenge</option>
-            </select>
-          </label>
-
-          <label>
-            Difficulty
-            <select {...form.register("difficulty")}>
-              <option value="easy">easy</option>
-              <option value="medium">medium</option>
-              <option value="hard">hard</option>
-            </select>
-          </label>
-
-          <button type="submit" disabled={loading}>
-            {loading ? "Generating config..." : "Generate config"}
+        <div className="modeToggle">
+          <button
+            type="button"
+            className={mode === "manual" ? "toggleButtonActive" : ""}
+            onClick={() => setMode("manual")}
+          >
+            Manual Mode
           </button>
-        </form>
+          <button
+            type="button"
+            className={mode === "agent" ? "toggleButtonActive" : ""}
+            onClick={() => setMode("agent")}
+          >
+            Agent Mode
+          </button>
+        </div>
+
+        {mode === "manual" ? (
+          <form onSubmit={manualForm.handleSubmit(onManualSubmit)} className="form">
+            <label>
+              Game type
+              <select {...manualForm.register("gameType")}>
+                <option value="runner">runner</option>
+                <option value="merge">merge</option>
+                <option value="tap-survival">tap-survival</option>
+              </select>
+            </label>
+
+            <label>
+              Theme
+              <input {...manualForm.register("theme")} placeholder="space racers" />
+            </label>
+
+            <label>
+              Target audience
+              <select {...manualForm.register("targetAudience")}>
+                <option value="casual">casual</option>
+                <option value="midcore">midcore</option>
+              </select>
+            </label>
+
+            <label>
+              CTA style
+              <select {...manualForm.register("ctaStyle")}>
+                <option value="urgent">urgent</option>
+                <option value="reward">reward</option>
+                <option value="challenge">challenge</option>
+              </select>
+            </label>
+
+            <label>
+              Difficulty
+              <select {...manualForm.register("difficulty")}>
+                <option value="easy">easy</option>
+                <option value="medium">medium</option>
+                <option value="hard">hard</option>
+              </select>
+            </label>
+
+            <button type="submit" disabled={loading}>
+              {loading ? "Generating config..." : "Generate config"}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={agentForm.handleSubmit(onAgentSubmit)} className="form">
+            <label>
+              Theme
+              <input {...agentForm.register("theme")} placeholder="space racers" />
+            </label>
+
+            <label>
+              Target audience
+              <select {...agentForm.register("targetAudience")}>
+                <option value="casual">casual</option>
+                <option value="midcore">midcore</option>
+              </select>
+            </label>
+
+            <label>
+              Campaign goal
+              <input {...agentForm.register("campaignGoal")} placeholder="increase day-1 retention" />
+            </label>
+
+            <label>
+              Tone
+              <input {...agentForm.register("tone")} placeholder="urgent" />
+            </label>
+
+            <button type="submit" disabled={loading}>
+              {loading ? "Running agent workflow..." : "Run agent workflow"}
+            </button>
+          </form>
+        )}
+
+        {loading && (
+          <p className="loadingText">
+            {mode === "agent"
+              ? "Generating concept + config and refreshing history…"
+              : "Generating a config and refreshing history…"}
+          </p>
+        )}
 
         {loading && <p className="loadingText">Generating a config and refreshing history…</p>}
 
@@ -226,6 +365,37 @@ export default function App() {
 
         {result ? (
           <>
+            {agentConcept && (
+              <div className="conceptCard">
+                <h3>Agent concept</h3>
+                <p>
+                  <strong>Game type:</strong> {agentConcept.recommendedGameType}
+                </p>
+                <p>
+                  <strong>Headline idea:</strong> {agentConcept.headlineIdea}
+                </p>
+                <p>
+                  <strong>CTA direction:</strong> {agentConcept.ctaDirection}
+                </p>
+                <p>
+                  <strong>Gameplay concept:</strong> {agentConcept.gameplayConcept}
+                </p>
+              </div>
+            )}
+
+            {agentSteps.length > 0 && (
+              <div className="stepsCard">
+                <h3>Agent run steps</h3>
+                <ul>
+                  {agentSteps.map((step) => (
+                    <li key={step.name}>
+                      <strong>{step.name}</strong> — {step.status}: {step.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="previewCard" style={{ background: result.palette.background }}>
               <div className="previewHeader">
                 <span className="badge">{result.gameType}</span>
@@ -288,7 +458,9 @@ export default function App() {
                   <span>{item.provider}</span>
                   <span>{new Date(item.createdAt).toLocaleString()}</span>
                 </div>
-                <span className="historyStatus">Status: {item.status}</span>
+                <span className="historyStatus">
+                  Mode: {item.mode} · Status: {item.status}
+                </span>
               </button>
             ))
           )}
