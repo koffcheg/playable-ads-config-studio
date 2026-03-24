@@ -6,7 +6,7 @@ export async function getHistory(): Promise<PlayableAdHistoryListItem[]> {
   try {
     const collection = await getPlayableAdsCollection();
     const records = await collection
-      .find({}, { projection: { input: 1, output: 1, provider: 1, createdAt: 1 } })
+      .find({}, { projection: { input: 1, output: 1, provider: 1, createdAt: 1, mode: 1 } })
       .sort({ createdAt: -1 })
       .limit(20)
       .toArray();
@@ -17,6 +17,7 @@ export async function getHistory(): Promise<PlayableAdHistoryListItem[]> {
       gameType: record.output.gameType,
       provider: record.provider,
       status: record.output.status,
+      mode: record.mode === "agent" ? "agent" : "manual",
       createdAt: record.createdAt
     }));
   } catch (error) {
