@@ -1,9 +1,9 @@
-FROM node:20-alpine AS base
+FROM node:20.19-alpine3.21 AS base
 RUN corepack enable
 WORKDIR /workspace
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/shared/package.json packages/shared/package.json
 COPY apps/api/package.json apps/api/package.json
 RUN pnpm install --frozen-lockfile
@@ -13,9 +13,9 @@ COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
 RUN pnpm --filter @studio/shared build \
   && pnpm --filter @studio/api build \
-  && pnpm --filter @studio/api --prod deploy /out
+  && pnpm deploy --filter @studio/api --prod /out
 
-FROM node:20-alpine AS runtime
+FROM node:20.19-alpine3.21 AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build --chown=node:node /out ./
