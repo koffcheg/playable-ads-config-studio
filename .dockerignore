@@ -1,0 +1,27 @@
+# VCS
+.git
+.gitignore
+
+# Node/pnpm artifacts
+node_modules
+**/node_modules
+.pnpm-store
+
+# Build artifacts
+**/dist
+**/build
+coverage
+
+# Local env/runtime files
+.env
+.env.*
+!.env.example
+*.log
+
+# OS/editor noise
+.DS_Store
+.vscode
+.idea
+
+# Docs and misc
+*.md
