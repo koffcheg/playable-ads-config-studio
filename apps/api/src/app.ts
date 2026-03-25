@@ -6,15 +6,16 @@ import { AppError } from "./utils/errors.js";
 import { buildErrorResponse } from "./utils/http.js";
 
 export function buildApp() {
+  const usePrettyLogger = process.env.LOG_PRETTY === "true";
+
   const app = Fastify({
-    logger:
-      process.env.NODE_ENV !== "production"
-        ? {
-            transport: {
-              target: "pino-pretty"
-            }
+    logger: usePrettyLogger
+      ? {
+          transport: {
+            target: "pino-pretty"
           }
-        : true
+        }
+      : true
   });
 
   app.register(cors, {
