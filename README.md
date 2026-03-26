@@ -17,15 +17,40 @@ This project demonstrates how to put an LLM behind a reliable backend contract f
 - `apps/web` — React + Vite internal tool UI.
 - `packages/shared` — shared Zod schemas + TS types used by both API and web.
 
-Flow:
+```mermaid
+flowchart LR
+  UI[Web UI
+apps/web]
+  API[API
+apps/api]
+  DB[(MongoDB)]
+  LLM[LLM Provider Layer
+getProvider]
+  Mock[Mock Provider]
+  OR[OpenRouter Provider]
 
-1. Web posts generation input to API.
-2. API validates input with Zod.
-3. API calls selected provider (`mock` or `openrouter`).
-4. API validates provider output against shared schema.
-5. If validation fails, API emits a fallback config.
-6. API stores input/output/provider metadata in MongoDB.
-7. Web renders current result + history.
+  UI -->|Manual mode
+/generate-config| API
+  UI -->|Agent mode
+/agent-generate| API
+
+  API -->|validate + route| LLM
+  LLM --> Mock
+  LLM --> OR
+
+  Mock --> API
+  OR --> API
+
+  API -->|persist history| DB
+  API -->|config / agent result| UI
+```
+
+Flow summary:
+
+1. Web UI can start either **manual mode** (`/generate-config`) or **agent mode** (`/agent-generate`).
+2. API validates input, then calls the **LLM provider layer**.
+3. Provider layer dispatches to **Mock provider** or **OpenRouter provider**.
+4. API validates outputs, persists history to **MongoDB**, and returns results to the web UI.
 
 ## Why generate config instead of raw AI game code?
 
